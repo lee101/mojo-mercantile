@@ -7,7 +7,7 @@ import operator
 import warnings
 from collections import namedtuple
 from collections.abc import Sequence
-from functools import reduce
+from functools import lru_cache, reduce
 
 import numpy as np
 
@@ -64,7 +64,7 @@ class Tile(namedtuple("Tile", ["x", "y", "z"])):
                 "Mercantile 2.0 will require tile x and y to be within the range (0, 2 ** zoom)",
                 FutureWarning,
             )
-        return tuple.__new__(cls, [x, y, z])
+        return tuple.__new__(cls, (x, y, z))
 
 
 LngLat = namedtuple("LngLat", ["lng", "lat"])
@@ -82,6 +82,7 @@ def _parse_tile_arg(*args):
     )
 
 
+@lru_cache(maxsize=28)
 def minmax(zoom):
     try:
         if int(zoom) != zoom or zoom < 0:

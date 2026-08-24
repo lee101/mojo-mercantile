@@ -40,13 +40,15 @@ pixi run bench
 
 ## Benchmark
 
-Measured on 2026-08-02 by `pixi run bench`, using Mojo `1.0.0b3.dev2026072406`, Python 3.13, and mercantile 1.2.1. Values are the best of three Mojo runs and one upstream Python-loop run. Results are machine-dependent; the benchmark task takes a machine-wide flock.
+Measured on 2026-08-24 by `pixi run bench`, using Mojo `1.1.0.dev2026081105`, Python 3.13, and mercantile 1.2.1. Values are the best of three mojo-mercantile runs and one upstream Python-loop run. Results are machine-dependent; the benchmark task takes a machine-wide flock.
 
 | kernel | mojo-mercantile | mercantile 1.2.1 | speedup |
 | --- | ---: | ---: | ---: |
-| tile_many, 1M coordinates at z14 | 81.54 ms | 3665.14 ms | 44.95x |
-| tile, 100K coordinates at z14 | 342.83 ms | 340.14 ms | 0.99x |
-| bounds_many, 1M z14 tiles | 172.43 ms | 17696.98 ms | 102.64x |
+| tile_many, 1M coordinates at z14 | 84.31 ms | 3832.13 ms | 45.45x |
+| tile, 100K coordinates at z14 | 334.47 ms | 344.22 ms | 1.03x |
+| bounds_many, 1M z14 tiles | 95.90 ms | 14133.31 ms | 147.38x |
+
+Profiling identified scalar `tile` as the only benchmark at or below upstream parity. Its repeated zoom-range calculation is now cached, matching upstream's fast path, and `Tile` construction no longer creates a temporary list. The batch kernels were already more than 5x faster than upstream, so their loops were intentionally left unchanged. No SIMD, parallel, or GPU path was added: the scalar target has no batch loop over which to amortize those mechanisms, while the independent batch kernels were outside the optimization target set. CPU remains the only execution device.
 
 ## How it works
 
